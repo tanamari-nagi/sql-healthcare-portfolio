@@ -1,0 +1,40 @@
+
+## Day3（年代 × 喫煙：2軸分析）
+- 分析目的：
+  - 年代と喫煙状況の組み合わせごとに、HbA1c ≥ 8.0 の高リスク患者の「人数」と「割合」を比較する
+- 学習ポイント：
+  - 分析軸が増えると GROUP BY も増える
+  - 条件付き人数は SUM(CASE WHEN ...) で算出
+  - 割合で母数差を考慮する
+
+
+Table:
+- patient_data (assumed columns: age, smoking, hba1c)
+*/
+
+SELECT
+  CASE
+    WHEN age BETWEEN 20 AND 29 THEN '20s'
+    WHEN age BETWEEN 30 AND 39 THEN '30s'
+    WHEN age BETWEEN 40 AND 49 THEN '40s'
+    ELSE '50plus'
+  END AS age_group,
+  smoking,
+  COUNT(*) AS total_patients,
+  SUM(CASE WHEN hba1c >= 8.0 THEN 1 ELSE 0 END) AS hba1c_8plus,
+  ROUND(
+    100.0 * SUM(CASE WHEN hba1c >= 8.0 THEN 1 ELSE 0 END) / COUNT(*),
+    2
+  ) AS pct_hba1c_8plus
+FROM patient_data
+GROUP BY
+  age_group,
+  smoking
+ORDER BY
+  CASE age_group
+    WHEN '20s' THEN 1
+    WHEN '30s' THEN 2
+    WHEN '40s' THEN 3
+    ELSE 4
+  END,
+  smoking;
